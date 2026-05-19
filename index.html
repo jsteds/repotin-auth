@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Repot.in – Device Manager</title>
+  <link rel="manifest"
+    href='data:application/manifest+json,{"name":"Repot.in Device Manager","short_name":"DevMgr","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#6366f1","icons":[{"src":"https://via.placeholder.com/192x192/6366f1/ffffff?text=DM","sizes":"192x192","type":"image/png"}]}'>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DevMgr" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── TOPBAR ─────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, .92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .topbar h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .topbar span {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 1px;
+    }
+
+    #btn-refresh {
+      background: var(--surface2);
+      border: none;
+      color: var(--text-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 17px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .2s;
+    }
+
+    #btn-refresh:active {
+      transform: scale(.9);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    #btn-refresh.spinning {
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── MAIN CONTENT ─────────────────────────── */
+    .container {
+      padding: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── STATUS CARD ─────────────────────────── */
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--text-muted);
+    }
+
+    .status-dot.ok {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-dot.err {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .status-dot.loading {
+      background: var(--warning);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: .4;
+      }
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status-text strong {
+      color: var(--text);
+      display: block;
+      font-size: 13px;
+    }
+
+    /* ── SECTION TITLE ─────────────────────────── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 10px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .badge {
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* ── ADD FORM ─────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .form-group input {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: 'Inter', monospace;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+    }
+
+    .btn-primary:active {
+      transform: scale(.97);
+      opacity: .9;
+    }
+
+    .btn-primary:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, .15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, .3);
+    }
+
+    .btn-danger:active {
+      background: rgba(239, 68, 68, .3);
+    }
+
+    /* ── DEVICE LIST ─────────────────────────── */
+    .device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .device-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: fadeIn .25s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+    }
+
+    .device-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, .2), rgba(139, 92, 246, .2));
+      border: 1px solid rgba(99, 102, 241, .3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .device-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .device-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .device-ip {
+      font-size: 11px;
+      color: var(--accent2);
+      margin-top: 2px;
+      font-family: monospace;
+    }
+
+    .device-mac {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      font-family: monospace;
+    }
+
+    .device-date {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .2s;
+      flex-shrink: 0;
+    }
+
+    .btn-delete:active {
+      background: rgba(239, 68, 68, .2);
+      color: var(--danger);
+    }
+
+    /* ── EMPTY STATE ─────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ── TOAST ─────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 999;
+      transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+      white-space: nowrap;
+      max-width: 90vw;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #toast.success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    #toast.error {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* ── MODAL ─────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      width: 100%;
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 20px 16px 32px;
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .modal p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+    }
+
+    .btn-cancel {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    /* ── CONFIG SECTION ─────────────────────────── */
+    .config-note {
+      background: rgba(99, 102, 241, .08);
+      border: 1px solid rgba(99, 102, 241, .2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .config-note a {
+      color: var(--accent2);
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo-dot">R</div>
+      <div>
+        <h1>Device Manager</h1>
+        <span>Repot.in Whitelist</span>
+      </div>
+    </div>
+    <button id="btn-refresh" title="Refresh">⟳</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="container">
+
+    <!-- STATUS -->
+    <div class="status-card" id="status-card">
+      <div class="status-dot loading" id="status-dot"></div>
+      <div class="status-text">
+        <strong id="status-title">Menghubungkan...</strong>
+        <span id="status-msg">Memeriksa koneksi ke server</span>
+      </div>
+    </div>
+
+    <!-- SCRIPT URL CONFIG -->
+    <div id="config-section">
+      <div class="config-note">
+        ⚙️ Masukkan URL <strong>Google Apps Script</strong> (Admin Endpoint) untuk mengakses whitelist.<br>
+        URL ini berbeda dengan URL validasi utama.
+      </div>
+      <div class="card">
+        <div class="form-group">
+          <label>Apps Script Admin URL</label>
+          <input type="url" id="script-url" placeholder="https://script.google.com/macros/s/..." />
+        </div>
+        <div class="form-group">
+          <label>Admin Password</label>
+          <input type="password" id="admin-pass" placeholder="Password admin" />
+        </div>
+        <button class="btn btn-primary" id="btn-connect">🔗 Hubungkan</button>
+      </div>
+    </div>
+
+    <!-- ADD DEVICE FORM -->
+    <div id="add-section" style="display:none">
+      <div class="section-title">Tambah Device Baru</div>
+      <div class="card">
+        <div class="form-group">
+          <label>Nama / Label Device</label>
+          <input type="text" id="inp-name" placeholder="cth: PC Kasir 1" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>IP Address</label>
+            <input type="text" id="inp-ip" placeholder="192.168.1.10" inputmode="decimal" />
+          </div>
+          <div class="form-group">
+            <label>MAC Address</label>
+            <input type="text" id="inp-mac" placeholder="AA:BB:CC:DD:EE:FF" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Catatan (opsional)</label>
+          <input type="text" id="inp-note" placeholder="cth: Lantai 2 – Meja Kasir" />
+        </div>
+        <button class="btn btn-primary" id="btn-add" disabled>✚ Tambah ke Whitelist</button>
+      </div>
+
+      <!-- DEVICE LIST -->
+      <div class="section-title">
+        Device Terdaftar
+        <span class="badge" id="device-count">0</span>
+      </div>
+      <div id="device-list" class="device-list">
+        <div class="empty-state">
+          <div class="icon">📋</div>
+          <p>Belum ada device.<br>Tambahkan device di atas.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+      <h3>🗑️ Hapus Device?</h3>
+      <p id="delete-modal-msg">Yakin ingin menghapus device ini dari whitelist? App Repot.in di device tersebut tidak
+        akan bisa terbuka lagi.</p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" id="btn-cancel-delete">Batal</button>
+        <button class="btn btn-danger" id="btn-confirm-delete">Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+  <script>
+    // ─── CONFIG ───────────────────────────────────────────────────────────
+    const STORAGE_KEY_URL = 'repotin_admin_url';
+    const STORAGE_KEY_PASS = 'repotin_admin_pass';
+
+    let adminUrl = localStorage.getItem(STORAGE_KEY_URL) || '';
+    let adminPass = localStorage.getItem(STORAGE_KEY_PASS) || '';
+    let devices = [];
+    let deleteTargetRow = null;
+
+    // ─── ELEMENTS ─────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const statusDot = $('status-dot');
+    const statusTitle = $('status-title');
+    const statusMsg = $('status-msg');
+    const configSec = $('config-section');
+    const addSec = $('add-section');
+    const scriptInput = $('script-url');
+    const passInput = $('admin-pass');
+    const btnConnect = $('btn-connect');
+    const btnAdd = $('btn-add');
+    const btnRefresh = $('btn-refresh');
+    const deviceList = $('device-list');
+    const deviceCount = $('device-count');
+    const deleteModal = $('delete-modal');
+    const toast = $('toast');
+
+    // ─── INIT ────────────────────────────────────────────────────────────
+    if (adminUrl && adminPass) {
+      scriptInput.value = adminUrl;
+      passInput.value = adminPass;
+      setStatus('loading');
+      fetchDevices();
+    } else {
+      setStatus('idle');
+    }
+
+    enableAddBtn();
+
+    // ─── STATUS ──────────────────────────────────────────────────────────
+    function setStatus(state, msg) {
+      statusDot.className = 'status-dot';
+      if (state === 'ok') {
+        statusDot.classList.add('ok');
+        statusTitle.textContent = 'Terhubung';
+        statusMsg.textContent = msg || 'Server aktif & data berhasil dimuat';
+      } else if (state === 'err') {
+        statusDot.classList.add('err');
+        statusTitle.textContent = 'Gagal Terhubung';
+        statusMsg.textContent = msg || 'Periksa URL dan password admin';
+      } else if (state === 'loading') {
+        statusDot.classList.add('loading');
+        statusTitle.textContent = 'Memuat...';
+        statusMsg.textContent = msg || 'Mengambil data dari server';
+      } else {
+        statusTitle.textContent = 'Belum Terhubung';
+        statusMsg.textContent = 'Masukkan URL Apps Script dan password';
+      }
+    }
+
+    // ─── CONNECT ─────────────────────────────────────────────────────────
+    btnConnect.addEventListener('click', () => {
+      adminUrl = scriptInput.value.trim();
+      adminPass = passInput.value.trim();
+      if (!adminUrl) { showToast('Masukkan URL Apps Script', 'error'); return; }
+      if (!adminPass) { showToast('Masukkan password admin', 'error'); return; }
+      localStorage.setItem(STORAGE_KEY_URL, adminUrl);
+      localStorage.setItem(STORAGE_KEY_PASS, adminPass);
+      setStatus('loading');
+      fetchDevices();
+    });
+
+    // ─── REFRESH ─────────────────────────────────────────────────────────
+    btnRefresh.addEventListener('click', () => {
+      if (!adminUrl) { showToast('Belum terhubung ke server', 'error'); return; }
+      btnRefresh.classList.add('spinning');
+      fetchDevices().finally(() => setTimeout(() => btnRefresh.classList.remove('spinning'), 500));
+    });
+
+    // ─── FETCH DEVICES ───────────────────────────────────────────────────
+    async function fetchDevices() {
+      try {
+        const url = `${adminUrl}?action=list&pass=${encodeURIComponent(adminPass)}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        devices = data.devices || [];
+        renderDevices();
+        setStatus('ok', `${devices.length} device terdaftar`);
+        configSec.style.display = 'none';
+        addSec.style.display = 'block';
+        return data;
+      } catch (e) {
+        setStatus('err', e.message);
+        showToast('Gagal memuat data: ' + e.message, 'error');
+        configSec.style.display = 'block';
+        addSec.style.display = 'none';
+        throw e;
+      }
+    }
+
+    // ─── RENDER DEVICES ──────────────────────────────────────────────────
+    function renderDevices() {
+      deviceCount.textContent = devices.length;
+      if (!devices.length) {
+        deviceList.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Belum ada device.<br>Tambahkan device di atas.</p></div>`;
+        return;
+      }
+      deviceList.innerHTML = devices.map((d, i) => `
+    <div class="device-card">
+      <div class="device-icon">💻</div>
+      <div class="device-info">
+        <div class="device-name">${escHtml(d.name || 'Device ' + (i + 1))}</div>
+        <div class="device-ip">🌐 ${escHtml(d.ip)}</div>
+        <div class="device-mac">🔌 ${escHtml(d.mac)}</div>
+        ${d.note ? `<div class="device-date">📝 ${escHtml(d.note)}</div>` : ''}
+        ${d.added ? `<div class="device-date">🗓 Ditambah: ${escHtml(d.added)}</div>` : ''}
+      </div>
+      <button class="btn-delete" onclick="confirmDelete(${i})" title="Hapus">✕</button>
+    </div>
+  `).join('');
+    }
+
+    // ─── ADD DEVICE ──────────────────────────────────────────────────────
+    function enableAddBtn() {
+      const ipOk = $('inp-ip').value.trim().length > 0;
+      const macOk = $('inp-mac').value.trim().length > 0;
+      btnAdd.disabled = !(ipOk && macOk && adminUrl);
+    }
+    ['inp-ip', 'inp-mac', 'inp-name', 'inp-note'].forEach(id => $(id)?.addEventListener('input', enableAddBtn));
+
+    // Auto-format MAC address
+    $('inp-mac').addEventListener('input', function () {
+      let val = this.value.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
+      val = val.match(/.{1,2}/g)?.join(':') || val;
+      this.value = val.substring(0, 17);
+      enableAddBtn();
+    });
+
+    btnAdd.addEventListener('click', async () => {
+      const name = $('inp-name').value.trim() || 'Device Baru';
+      const ip = $('inp-ip').value.trim();
+      const mac = $('inp-mac').value.trim().toUpperCase();
+      const note = $('inp-note').value.trim();
+
+      if (!ip || !mac) { showToast('IP dan MAC wajib diisi', 'error'); return; }
+      if (!validateIP(ip)) { showToast('Format IP tidak valid', 'error'); return; }
+      if (!validateMAC(mac)) { showToast('Format MAC tidak valid (XX:XX:XX:XX:XX:XX)', 'error'); return; }
+
+      // Check duplicate
+      if (devices.some(d => d.mac === mac && d.ip === ip)) {
+        showToast('Device sudah ada di whitelist', 'error'); return;
+      }
+
+      btnAdd.disabled = true;
+      btnAdd.textContent = '⏳ Menyimpan...';
+
+      try {
+        const body = new URLSearchParams({ action: 'add', pass: adminPass, name, ip, mac, note });
+        const res = await fetch(adminUrl, { method: 'POST', body });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        showToast('✅ Device berhasil ditambahkan!', 'success');
+        $('inp-name').value = '';
+        $('inp-ip').value = '';
+        $('inp-mac').value = '';
+        $('inp-note').value = '';
+        await fetchDevices();
+      } catch (e) {
+        showToast('Gagal tambah: ' + e.message, 'error');
+      } finally {
+        btnAdd.textContent = '✚ Tambah ke Whitelist';
+        enableAddBtn();
+      }
+    });
+
+    // ─── DELETE ──────────────────────────────────────────────────────────
+    function confirmDelete(idx) {
+      deleteTargetRow = idx;
+      const d = devices[idx];
+      $('delete-modal-msg').textContent =
+        `Hapus "${d.name || 'Device'}" (IP: ${d.ip}, MAC: ${d.mac}) dari whitelist? App Repot.in di device tersebut tidak akan bisa terbuka lagi.`;
+      deleteModal.classList.add('open');
+    }
+    $('btn-cancel-delete').addEventListener('click', () => deleteModal.classList.remove('open'));
+    deleteModal.addEventListener('click', e => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
+
+    $('btn-confirm-delete').addEventListener('click', async () => {
+      if (deleteTargetRow === null) return;
+      deleteModal.classList.remove('open');
+      const d = devices[deleteTargetRow];
+      $('btn-confirm-delete').textContent = '⏳';
+
+      try {
+        const body = new URLSearchParams({ action: 'delete', pass: adminPass, ip: d.ip, mac: d.mac });
+        const res = await fetch(adminUrl, { method: 'POST', body });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        showToast('🗑️ Device dihapus', 'success');
+        await fetchDevices();
+      } catch (e) {
+        showToast('Gagal hapus: ' + e.message, 'error');
+      } finally {
+        $('btn-confirm-delete').textContent = 'Hapus';
+        deleteTargetRow = null;
+      }
+    });
+
+    // ─── UTILS ───────────────────────────────────────────────────────────
+    function validateIP(ip) {
+      return /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) &&
+        ip.split('.').every(n => parseInt(n) >= 0 && parseInt(n) <= 255);
+    }
+    function validateMAC(mac) {
+      return /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac);
+    }
+    function escHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    let toastTimer;
+    function showToast(msg, type = '') {
+      toast.textContent = msg;
+      toast.className = type ? `show ${type}` : 'show';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.className = '', 2800);
+    }
+  </script>
+</body>
+
+</html>
