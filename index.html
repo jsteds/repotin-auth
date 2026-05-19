@@ -522,7 +522,7 @@
       <div class="logo-dot">R</div>
       <div>
         <h1>Device Manager</h1>
-        <span>Repot.in Whitelist</span>
+        <span>Repot.in Whitelist Devices</span>
       </div>
     </div>
     <button id="btn-refresh" title="Refresh">⟳</button>
@@ -553,7 +553,7 @@
         </div>
         <div class="form-group">
           <label>Admin Password</label>
-          <input type="password" id="admin-pass" placeholder="Password admin" />
+          <input type="password" id="admin-pass" placeholder="Password" />
         </div>
         <button class="btn btn-primary" id="btn-connect">🔗 Hubungkan</button>
       </div>
@@ -579,7 +579,7 @@
         </div>
         <div class="form-group">
           <label>Catatan (opsional)</label>
-          <input type="text" id="inp-note" placeholder="cth: Lantai 2 – Meja Kasir" />
+          <input type="text" id="inp-note" placeholder="cth: F703" />
         </div>
         <button class="btn btn-primary" id="btn-add" disabled>✚ Tambah ke Whitelist</button>
       </div>
@@ -749,18 +749,18 @@
     // Auto-format MAC address — titik dua otomatis, cursor dijaga
     $('inp-mac').addEventListener('input', function () {
       const cursorPos = this.selectionStart;
-      const prevLen   = this.value.length;
+      const prevLen = this.value.length;
 
       // Ambil hanya karakter hex, format ulang dengan titik dua tiap 2 digit
-      const raw       = this.value.replace(/[^a-fA-F0-9]/g, '').toUpperCase().substring(0, 12);
+      const raw = this.value.replace(/[^a-fA-F0-9]/g, '').toUpperCase().substring(0, 12);
       const formatted = raw.match(/.{1,2}/g)?.join(':') || raw;
-      this.value      = formatted;
+      this.value = formatted;
 
       // Pertahankan posisi cursor: kompensasi titik dua yang disisipkan otomatis
-      const newLen    = this.value.length;
-      const shift     = newLen - prevLen;
+      const newLen = this.value.length;
+      const shift = newLen - prevLen;
       const newCursor = Math.min(cursorPos + (shift > 0 ? shift : 0), newLen);
-      try { this.setSelectionRange(newCursor, newCursor); } catch (_) {}
+      try { this.setSelectionRange(newCursor, newCursor); } catch (_) { }
 
       enableAddBtn();
     });
