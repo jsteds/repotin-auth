@@ -746,11 +746,22 @@
     }
     ['inp-ip', 'inp-mac', 'inp-name', 'inp-note'].forEach(id => $(id)?.addEventListener('input', enableAddBtn));
 
-    // Auto-format MAC address
+    // Auto-format MAC address — titik dua otomatis, cursor dijaga
     $('inp-mac').addEventListener('input', function () {
-      let val = this.value.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
-      val = val.match(/.{1,2}/g)?.join(':') || val;
-      this.value = val.substring(0, 17);
+      const cursorPos = this.selectionStart;
+      const prevLen   = this.value.length;
+
+      // Ambil hanya karakter hex, format ulang dengan titik dua tiap 2 digit
+      const raw       = this.value.replace(/[^a-fA-F0-9]/g, '').toUpperCase().substring(0, 12);
+      const formatted = raw.match(/.{1,2}/g)?.join(':') || raw;
+      this.value      = formatted;
+
+      // Pertahankan posisi cursor: kompensasi titik dua yang disisipkan otomatis
+      const newLen    = this.value.length;
+      const shift     = newLen - prevLen;
+      const newCursor = Math.min(cursorPos + (shift > 0 ? shift : 0), newLen);
+      try { this.setSelectionRange(newCursor, newCursor); } catch (_) {}
+
       enableAddBtn();
     });
 
