@@ -680,6 +680,146 @@
     .edit-form-row .form-group {
       flex: 1;
     }
+    /* ── FEATURE MODAL EXTRAS ── */
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 16px;
+      max-height: 65vh;
+      overflow-y: auto;
+    }
+
+    .feature-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      transition: border-color .2s;
+    }
+
+    .feature-row.enabled {
+      border-color: rgba(16, 185, 129, .35);
+    }
+
+    .feature-row.disabled {
+      border-color: rgba(239, 68, 68, .3);
+      opacity: .85;
+    }
+
+    .feature-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .feature-label .name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .feature-label .key {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-wrap input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #374151;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: #9ca3af;
+      border-radius: 50%;
+      transition: transform .2s, background .2s;
+    }
+
+    .toggle-wrap input:checked + .toggle-slider {
+      background: rgba(16, 185, 129, .25);
+    }
+
+    .toggle-wrap input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+      background: var(--success);
+    }
+
+    .feature-modal-device {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .feature-modal-device strong {
+      color: var(--accent2);
+    }
+
+    .feature-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin: 12px 0 6px;
+    }
+
+    .btn-feature {
+      color: #a78bfa;
+      border-color: rgba(167, 139, 250, .3);
+    }
+
+    .btn-feature:active {
+      background: rgba(167, 139, 250, .15);
+    }
+
+    /* Disabled count badge on feature button */
+    .feat-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--danger);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-left: 3px;
+      line-height: 1;
+    }
   </style>
 </head>
 
@@ -790,6 +930,38 @@
       <div class="modal-actions" style="margin-top:14px">
         <button class="btn btn-cancel" id="btn-cancel-edit">Batal</button>
         <button class="btn btn-primary" id="btn-save-edit">💾 Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURE MODAL -->
+  <div class="modal-overlay" id="feature-modal">
+    <div class="modal">
+      <div class="modal-title">⚙️ Kelola Fitur</div>
+      <div class="feature-modal-device" id="feature-modal-device">Device: <strong>-</strong></div>
+      <div class="feature-section-title">Aktifkan / Nonaktifkan tab per device</div>
+      <div class="feature-list" id="feature-list"></div>
+      <div class="modal-actions" style="margin-top:6px">
+        <button class="btn btn-cancel" id="btn-cancel-feature">Batal</button>
+        <button class="btn btn-primary" id="btn-save-feature">💾 Simpan Fitur</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISOLATE CONFIRM MODAL -->
+  <div class="modal-overlay" id="isolate-modal">
+    <div class="modal">
+      <h3>🔒 Isolasi Device?</h3>
+      <p id="isolate-modal-msg"></p>
+      <div class="edit-form">
+        <div class="form-group">
+          <label>📅 Isolasi hingga tanggal (kosongkan = tidak ada batas waktu)</label>
+          <input type="date" id="isolate-until" />
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="btn btn-cancel" id="btn-cancel-isolate">Batal</button>
+        <button class="btn btn-danger" id="btn-confirm-isolate">🔒 Isolasi</button>
       </div>
     </div>
   </div>
@@ -937,7 +1109,15 @@
         const st = d.status || 'active';
         const isolateBtn = st === 'isolated'
           ? `<button class="btn-action unisolate" onclick="doIsolate(${i},false)">🔓 Aktifkan</button>`
-          : `<button class="btn-action isolate"   onclick="doIsolate(${i},true)">🔒 Isolasi</button>`;
+          : `<button class="btn-action isolate"   onclick="confirmIsolate(${i})">🔒 Isolasi</button>`;
+        const isolateInfo = (st === 'isolated' && d.isolateUntil)
+          ? `<div class="device-expiry near">🔒 Isolasi s/d ${d.isolateUntil}</div>` : '';
+
+        // Hitung berapa fitur yang dinonaktifkan
+        const vt = d.visibleTabs || {};
+        const disabledCount = Object.values(vt).filter(v => v === false).length;
+        const featBadge = disabledCount > 0 ? `<span class="feat-count">${disabledCount}</span>` : '';
+
         return `
     <div class="device-card">
       <div class="device-top">
@@ -951,16 +1131,19 @@
           <div class="device-mac">🔌 ${escHtml(d.mac)}</div>
           ${d.note ? `<div class="device-date">📝 ${escHtml(d.note)}</div>` : ''}
           ${expiryLine(d)}
+          ${isolateInfo}
         </div>
       </div>
       <div class="card-actions">
         <button class="btn-action edit" onclick="openEdit(${i})">✏️ Edit</button>
+        <button class="btn-action btn-feature" onclick="openFeatures(${i})">⚙️ Fitur${featBadge}</button>
         ${isolateBtn}
         <button class="btn-action danger" onclick="confirmDelete(${i})">🗑️ Hapus</button>
       </div>
     </div>`;
       }).join('');
     }
+
 
     // ─── ADD DEVICE ──────────────────────────────────────────────────────
     function enableAddBtn() {
@@ -1072,10 +1255,31 @@
     });
 
     // ─── ISOLASI ──────────────────────────────────────────────────────────
-    async function doIsolate(idx, isolate) {
+    let isolateTargetRow = null;
+    const isolateModal = $('isolate-modal');
+
+    function confirmIsolate(idx) {
+      isolateTargetRow = idx;
+      const d = devices[idx];
+      $('isolate-modal-msg').textContent = `Isolasi "${d.name || 'Device'}" (IP: ${d.ip})? Device tidak akan bisa mengakses aplikasi selama periode isolasi.`;
+      $('isolate-until').value = '';
+      isolateModal.classList.add('open');
+    }
+    $('btn-cancel-isolate').addEventListener('click', () => isolateModal.classList.remove('open'));
+    isolateModal.addEventListener('click', e => { if (e.target === isolateModal) isolateModal.classList.remove('open'); });
+
+    $('btn-confirm-isolate').addEventListener('click', async () => {
+      if (isolateTargetRow === null) return;
+      isolateModal.classList.remove('open');
+      const isolateUntil = $('isolate-until').value;
+      await doIsolate(isolateTargetRow, true, isolateUntil);
+      isolateTargetRow = null;
+    });
+
+    async function doIsolate(idx, isolate, isolateUntil = '') {
       const d = devices[idx];
       const act = isolate ? 'isolate' : 'unisolate';
-      const body = new URLSearchParams({ action: act, pass: adminPass, ip: d.ip, mac: d.mac });
+      const body = new URLSearchParams({ action: act, pass: adminPass, ip: d.ip, mac: d.mac, isolateUntil });
       try {
         const res = await fetch(adminUrl, { method: 'POST', body });
         const data = await res.json();
@@ -1110,6 +1314,94 @@
         await fetchDevices();
       } catch (e) { showToast('Gagal hapus: ' + e.message, 'error'); }
       finally { $('btn-confirm-delete').textContent = 'Hapus'; deleteTargetRow = null; }
+    });
+
+    // ─── FEATURE MANAGER ─────────────────────────────────────────────────
+    const FEATURE_DEFS = [
+      { key: 'sales_report', label: 'Sales Report',    icon: '📈' },
+      { key: 'bscd',         label: 'BSCD',            icon: '📋' },
+      { key: 'kas',          label: 'Kas & Tips',      icon: '💰' },
+      { key: 'order',        label: 'Order Barang',    icon: '📦' },
+      { key: 'inuse',        label: 'In-Use',          icon: '♻️' },
+      { key: 'waste',        label: 'Konversi Waste',  icon: '🗑️' },
+      { key: 'edspayed',     label: 'Edspayed',        icon: '💳' },
+      { key: 'minum',        label: 'Minum',           icon: '🥤' },
+      { key: 'bpk',          label: 'BPK (Petty Cash)',icon: '🧾' },
+      { key: 'menu_analysis',label: 'Menu Analysis',   icon: '🍽️' },
+    ];
+
+    let featureTargetRow = null;
+    const featureModal = $('feature-modal');
+
+    function openFeatures(idx) {
+      featureTargetRow = idx;
+      const d = devices[idx];
+      const vt = d.visibleTabs || {};
+
+      $('feature-modal-device').innerHTML =
+        `${escHtml(d.name || 'Device')} &nbsp;·&nbsp; <strong>${escHtml(d.ip)}</strong>`;
+
+      $('feature-list').innerHTML = FEATURE_DEFS.map(f => {
+        const isOn = vt[f.key] !== false; // default true
+        return `
+          <label class="feature-row ${isOn ? 'enabled' : 'disabled'}" id="feat-row-${f.key}">
+            <div class="feature-label">
+              <span class="name">${f.icon} ${f.label}</span>
+              <span class="key">${f.key}</span>
+            </div>
+            <div class="toggle-wrap">
+              <input type="checkbox" id="feat-${f.key}" ${isOn ? 'checked' : ''}
+                onchange="syncFeatureRow('${f.key}')" />
+              <span class="toggle-slider"></span>
+            </div>
+          </label>`;
+      }).join('');
+
+      featureModal.classList.add('open');
+    }
+
+    function syncFeatureRow(key) {
+      const checked = $('feat-' + key).checked;
+      const row = $('feat-row-' + key);
+      row.className = `feature-row ${checked ? 'enabled' : 'disabled'}`;
+    }
+
+    $('btn-cancel-feature').addEventListener('click', () => featureModal.classList.remove('open'));
+    featureModal.addEventListener('click', e => { if (e.target === featureModal) featureModal.classList.remove('open'); });
+
+    $('btn-save-feature').addEventListener('click', async () => {
+      if (featureTargetRow === null) return;
+      const d = devices[featureTargetRow];
+
+      // Build features object: hanya simpan yang false (dinonaktifkan)
+      const features = {};
+      FEATURE_DEFS.forEach(f => {
+        const isOn = $('feat-' + f.key)?.checked;
+        if (!isOn) features[f.key] = false;
+        // Jika aktif, tidak perlu disimpan (default true)
+      });
+
+      $('btn-save-feature').textContent = '⏳';
+      try {
+        const body = new URLSearchParams({
+          action: 'setfeatures',
+          pass: adminPass,
+          ip: d.ip,
+          mac: d.mac,
+          features: JSON.stringify(features)
+        });
+        const res = await fetch(adminUrl, { method: 'POST', body });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        showToast('✅ Fitur berhasil diperbarui!', 'success');
+        featureModal.classList.remove('open');
+        await fetchDevices();
+      } catch (e) {
+        showToast('Gagal simpan fitur: ' + e.message, 'error');
+      } finally {
+        $('btn-save-feature').textContent = '💾 Simpan Fitur';
+        featureTargetRow = null;
+      }
     });
 
     // ─── UTILS ───────────────────────────────────────────────────────────
