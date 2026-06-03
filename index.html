@@ -680,6 +680,7 @@
     .edit-form-row .form-group {
       flex: 1;
     }
+
     /* ── FEATURE MODAL EXTRAS ── */
     .feature-list {
       display: flex;
@@ -764,11 +765,11 @@
       transition: transform .2s, background .2s;
     }
 
-    .toggle-wrap input:checked + .toggle-slider {
+    .toggle-wrap input:checked+.toggle-slider {
       background: rgba(16, 185, 129, .25);
     }
 
-    .toggle-wrap input:checked + .toggle-slider::before {
+    .toggle-wrap input:checked+.toggle-slider::before {
       transform: translateX(20px);
       background: var(--success);
     }
@@ -1318,16 +1319,16 @@
 
     // ─── FEATURE MANAGER ─────────────────────────────────────────────────
     const FEATURE_DEFS = [
-      { key: 'sales_report', label: 'Sales Report',    icon: '📈' },
-      { key: 'bscd',         label: 'BSCD',            icon: '📋' },
-      { key: 'kas',          label: 'Kas & Tips',      icon: '💰' },
-      { key: 'order',        label: 'Order Barang',    icon: '📦' },
-      { key: 'inuse',        label: 'In-Use',          icon: '♻️' },
-      { key: 'waste',        label: 'Konversi Waste',  icon: '🗑️' },
-      { key: 'edspayed',     label: 'Edspayed',        icon: '💳' },
-      { key: 'minum',        label: 'Minum',           icon: '🥤' },
-      { key: 'bpk',          label: 'BPK (Petty Cash)',icon: '🧾' },
-      { key: 'menu_analysis',label: 'Menu Analysis',   icon: '🍽️' },
+      { key: 'sales_report', label: 'Sales Report', icon: '📈' },
+      { key: 'bscd', label: 'BSCD', icon: '📋' },
+      { key: 'kas', label: 'Kas & Tips', icon: '💰' },
+      { key: 'order', label: 'Order Barang', icon: '📦' },
+      { key: 'inuse', label: 'In-Use', icon: '♻️' },
+      { key: 'waste', label: 'Konversi Waste', icon: '🗑️' },
+      { key: 'edspayed', label: 'Edspayed', icon: '💳' },
+      { key: 'minum', label: 'Minum', icon: '🥤' },
+      { key: 'bpk', label: 'BPK (Petty Cash)', icon: '🧾' },
+      { key: 'menu_analysis', label: 'Menu Analysis', icon: '🍽️' },
     ];
 
     let featureTargetRow = null;
